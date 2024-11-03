@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  # 抓取 telegraf 的 metrics
+  - job_name: "telegraf"
+    static_configs:
+      - targets: ["telegraf:9273"]
+

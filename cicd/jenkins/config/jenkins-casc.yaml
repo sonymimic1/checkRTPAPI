@@ -1,0 +1,56 @@
+jenkins:
+  systemMessage: "Jenkins 配置由 Configuration as Code 插件管理"
+  numExecutors: 2
+  scmCheckoutRetryCount: 2
+  mode: NORMAL
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+
+  nodes:
+    - permanent:
+        name: "built-in-node"
+        remoteFS: "/home/jenkins"
+        launcher:
+          jnlp:
+            workDirSettings:
+              disabled: true
+              failIfWorkDirIsMissing: false
+              internalDir: "remoting"
+
+tool:
+  git:
+    installations:
+      - name: "Default"
+        home: "git"
+
+jobs:
+  - script: >
+      pipelineJob('example-pipeline') {
+        definition {
+          cps {
+            script('''
+              pipeline {
+                agent any
+                stages {
+                  stage('Example') {
+                    steps {
+                      echo 'Hello World'
+                    }
+                  }
+                }
+              }
+            ''')
+          }
+        }
+      }

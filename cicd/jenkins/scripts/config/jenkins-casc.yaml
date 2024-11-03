@@ -1,0 +1,5 @@
+jenkins:
+  systemMessage: "Jenkins 已通過 Docker 配置"
+  numExecutors: 2
+  scmCheckoutRetryCount: 2
+  mode: NORMAL

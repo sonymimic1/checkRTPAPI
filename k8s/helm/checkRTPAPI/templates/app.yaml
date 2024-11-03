@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.application.name }}
+spec:
+  replicas: {{ .Values.application.replicas }}
+  selector:
+    matchLabels:
+      app: app-api
+  template:
+    metadata:
+      labels:
+        app: app-api
+    spec:
+      containers:
+      - name: app-api
+        image: {{ .Values.application.image }}
+        #imagePullPolicy: IfNotPresent # 使用本地镜像
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8001
+        volumeMounts:
+        - name: config
+          mountPath: /app/config.json
+          subPath: config.json
+      volumes:
+      - name: config
+        configMap:
+          name: app-api-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-api-service
+spec:
+  type: NodePort
+  selector:
+    app: app-api
+  ports:
+  - protocol: TCP
+    port: {{ .Values.application.port }}
+    targetPort: {{ .Values.application.port }}
+    nodePort: {{ .Values.application.nodePort }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-api-config
+data:
+  config.json: |
+    {
+      "app": {
+        "port": 8001,
+        "searchGameCode": ["AT01","AB3","GO01"],
+        "scheduleCleanRTP": "* 0 * * *"
+      },
+      "redis": {
+        "readTimeout": 3,
+        "writeTimeout": 30,
+        "maxRetries": 15,
+        "dialTimeout": 3,
+        "poolSize": 50,
+        "poolTimeout": 1800,
+        "idleTimeout": 1800,
+        "idleCheckFrequency": 900,
+        "hosts": [
+          "redis-cluster:6379"
+        ]
+      },
+      "log": {
+        "Enable": true,
+        "Level": "debug",
+        "FileSizeMega": 10,
+        "FileCount": 3,
+        "KeepDays": 1,
+        "Path": "./log/"
+      }
+    }

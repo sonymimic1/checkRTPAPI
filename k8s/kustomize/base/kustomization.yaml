@@ -1,0 +1,6 @@
+resources:
+  - redis-cluster.yml
+  - app.yml
+  - telegraf-service.yml
+  - prometheus.yml
+  - grafana.yml

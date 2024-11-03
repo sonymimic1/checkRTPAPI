@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegraf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegraf
+  template:
+    metadata:
+      labels:
+        app: telegraf
+    spec:
+      containers:
+      - name: telegraf
+        image: telegraf:1.31.0
+        ports:
+        - containerPort: 9273
+        volumeMounts:
+        - name: telegraf-config
+          mountPath: /etc/telegraf/telegraf.conf
+          subPath: telegraf.conf
+        - name: telegraf-d-config
+          mountPath: /etc/telegraf/telegraf.d/app-api.conf
+          subPath: app-api.conf
+        command: ["telegraf"]
+        args: ["--config", "/etc/telegraf/telegraf.conf", "--config-directory", "/etc/telegraf/telegraf.d"]
+      volumes:
+      - name: telegraf-config
+        configMap:
+          name: telegraf-config
+          items:
+            - key: telegraf.conf
+              path: telegraf.conf
+      - name: telegraf-d-config
+        configMap:
+          name: telegraf-config
+          items:
+            - key: app-api.conf
+              path: app-api.conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telegraf
+spec:
+  type: NodePort
+  selector:
+    app: telegraf
+  ports:
+    - protocol: TCP
+      port: 9273
+      targetPort: 9273
+      nodePort: 30001
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-config
+data:
+  telegraf.conf: |
+    [agent]
+    interval = "30s"
+    flush_interval = "5s"
+
+    [global_tags]
+    environment = "Dev"
+
+    [[outputs.prometheus_client]]
+    listen = ":9273"
+    metric_version = 2
+  
+  app-api.conf: |
+    [[inputs.http]]
+      urls = ["http://app-api-service:8001/rtp/all"]
+      name_override = "Monitor RTPs"
+      data_format = "json_v2"
+      
+      [[inputs.http.json_v2]]
+        [[inputs.http.json_v2.object]]
+          path = "RTPs"
+          tags = ["GameCode"]
+          timestamp_key = "last_reported"
+          timestamp_format = "unix"

@@ -1,0 +1,163 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+spec:
+  serviceName: redis-cluster
+  replicas: 6
+  selector:
+    matchLabels:
+      app: redis-cluster
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+    spec:
+      containers:
+      - name: redis
+        image: redis:6.2-alpine
+        ports:
+        - containerPort: 6379
+        - containerPort: 16379
+        command: ["/bin/sh"]
+        args: 
+          - "-c"
+          - |
+            redis-server /conf/redis.conf \
+              --protected-mode no \
+              --cluster-announce-ip ${POD_IP} \
+              --port ${REDIS_PORT}
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: REDIS_PORT
+          value: "6379"
+        volumeMounts:
+        - name: conf
+          mountPath: /conf
+          readOnly: false
+        - name: data
+          mountPath: /data
+          readOnly: false
+      volumes:
+      - name: conf
+        configMap:
+          name: redis-cluster-config
+          defaultMode: 0755
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster
+spec:
+  clusterIP: None
+  ports:
+  - port: 6379
+    targetPort: 6379
+  selector:
+    app: redis-cluster
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-cluster-config
+data:
+  redis.conf: |
+    port 6379
+    cluster-enabled yes
+    cluster-config-file /data/nodes.conf
+    cluster-node-timeout 5000
+    appendonly yes
+    bind 0.0.0.0
+    # 禁用保護模式，允許外部連接
+    protected-mode no
+  init-cluster.sh: |
+    #!/bin/sh
+    set -e
+
+    # 等待所有 Pod 就緒
+    for i in $(seq 0 5); do
+      until ping -c 1 redis-cluster-$i.redis-cluster; do
+        echo "等待 redis-cluster-$i.redis-cluster 就緒..."
+        sleep 5
+      done
+    done
+
+    # 檢查集群是否已初始化
+    if redis-cli -h redis-cluster-0.redis-cluster -p 6379 cluster info | grep -q 'cluster_state:ok'; then
+      echo "集群已初始化。"
+      exit 0
+    fi
+
+    # 清理所有節點
+    for i in $(seq 0 5); do
+      echo "清理 redis-cluster-$i.redis-cluster..."
+      sleep 1
+      redis-cli -h redis-cluster-$i.redis-cluster -p 6379 -c FLUSHALL
+      sleep 1
+      redis-cli -h redis-cluster-$i.redis-cluster -p 6379 -c CLUSTER RESET HARD
+    done
+    
+    
+    # 初始化集群
+    echo "初始化 Redis 集群..."
+    nodes=$(for i in $(seq 0 5); do
+    getent hosts redis-cluster-$i.redis-cluster | awk '{printf "%s:6379 ", $1}'
+    done)
+
+    redis-cli --cluster create $nodes --cluster-replicas 1 --cluster-yes
+    # 判斷集群是否初始化成功否則嘗試等待初始化完畢
+    while true; do
+      if redis-cli -h redis-cluster-0.redis-cluster -p 6379 cluster info | grep -q 'cluster_state:ok'; then
+        break
+      fi
+      sleep 1
+    done
+
+    echo "設置初始鍵值對..."
+    redis-cli -h redis-cluster-0.redis-cluster -p 6379 -c SET AT01-BET 100
+    redis-cli -h redis-cluster-0.redis-cluster -p 6379 -c SET AT01-WIN 97
+    redis-cli -h redis-cluster-0.redis-cluster -p 6379 -c SET AB3-BET 100
+    redis-cli -h redis-cluster-0.redis-cluster -p 6379 -c SET AB3-WIN 96
+
+    echo "集群初始化完成。"
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: redis-cluster-init
+  annotations:
+    kubectl.kubernetes.io/default-container: redis-cluster-init
+spec:
+  template:
+    metadata:
+      name: redis-cluster-init
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-redis-cluster
+        image: busybox
+        command: ['sh', '-c', 'until nc -z redis-cluster-0.redis-cluster 6379 && nc -z redis-cluster-1.redis-cluster 6379 && nc -z redis-cluster-2.redis-cluster 6379 && nc -z redis-cluster-3.redis-cluster 6379 && nc -z redis-cluster-4.redis-cluster 6379 && nc -z redis-cluster-5.redis-cluster 6379; do echo waiting for redis-cluster; sleep 2; done;']
+      containers:
+      - name: redis-cluster-init
+        image: redis:6.2-alpine
+        command: ["/bin/sh", "/conf/init-cluster.sh"]
+        volumeMounts:
+        - name: config
+          mountPath: /conf
+      volumes:
+      - name: config
+        configMap:
+          name: redis-cluster-config
+          defaultMode: 0755

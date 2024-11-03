@@ -1,0 +1,139 @@
+version: "3.0"
+
+services:
+# ----------------------------------------------
+# checkRTPAPI 服務
+# ----------------------------------------------
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: app-api
+    hostname: app-api
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./config/config.json:/app/config.json
+
+# ----------------------------------------------
+# # telegraf 向 api 抓資料 並且轉換成 metics 格式
+# ----------------------------------------------
+  telegraf:
+    image: telegraf:1.31.0
+    restart: always
+    container_name: telegraf
+    hostname: telegraf
+    ports:
+      - 9273:9273
+    volumes:
+      - ./shared-config/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf
+      - ./shared-config/telegraf/telegraf.d/:/etc/telegraf/telegraf.d/
+    command: telegraf --config /etc/telegraf/telegraf.conf --config-directory /etc/telegraf/telegraf.d
+
+# ----------------------------------------------
+# # prometheus 向 telegraf 抓取 metrics 進行監控
+# ----------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    restart: always
+    container_name: prometheus
+    hostname: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./shared-config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command: --config.file=/etc/prometheus/prometheus.yml
+  
+# ----------------------------------------------
+# # grafana
+# ----------------------------------------------
+  grafana:
+    image: grafana/grafana:7.5.16
+    container_name: grafana
+    hostname: grafana
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    env_file:
+      - ./shared-config/grafana/config.monitoring
+  
+# ----------------------------------------------
+# # 透過 bitnami/redis-cluster:6.0 image 方式啟動
+# ----------------------------------------------
+  redis-1:
+    image: redis:6.0
+    container_name: redis-1
+    environment:
+      TZ: Asia/Taipei
+    ports:
+      - 6371:6371
+      - 16371:16371
+    volumes:
+      - ./shared-config/redis-cluster/redis/6371/conf:/etc/redis
+      - ./shared-config/redis-cluster/redis/6371/data:/data
+    command: ["redis-server","/etc/redis/redis.conf"]
+ 
+  redis-2:
+    image: redis:6.0
+    container_name: redis-2
+    environment:
+      TZ: Asia/Taipei
+    ports:
+      - 6372:6372
+      - 16372:16372
+    volumes:
+      - ./shared-config/redis-cluster/redis/6372/conf:/etc/redis
+      - ./shared-config/redis-cluster/redis/6372/data:/data
+    command: ["redis-server","/etc/redis/redis.conf"]
+ 
+  redis-3:
+    image: redis:6.0
+    container_name: redis-3
+    environment:
+      TZ: Asia/Taipei
+    ports:
+      - 6373:6373
+      - 16373:16373
+    volumes:
+      - ./shared-config/redis-cluster/redis/6373/conf:/etc/redis
+      - ./shared-config/redis-cluster/redis/6373/data:/data
+    command: ["redis-server","/etc/redis/redis.conf"]
+ 
+  redis-4:
+    image: redis:6.0
+    container_name: redis-4
+    environment:
+      TZ: Asia/Taipei
+    ports:
+      - 6374:6374
+      - 16374:16374
+    volumes:
+      - ./shared-config/redis-cluster/redis/6374/conf:/etc/redis
+      - ./shared-config/redis-cluster/redis/6374/data:/data
+    command: ["redis-server","/etc/redis/redis.conf"]
+ 
+  redis-5:
+    image: redis:6.0
+    container_name: redis-5
+    environment:
+      TZ: Asia/Taipei
+    ports:
+      - 6375:6375
+      - 16375:16375
+    volumes:
+      - ./shared-config/redis-cluster/redis/6375/conf:/etc/redis
+      - ./shared-config/redis-cluster/redis/6375/data:/data
+    command: ["redis-server","/etc/redis/redis.conf"]
+ 
+  redis-6:
+    image: redis:6.0
+    container_name: redis-6
+    environment:
+      TZ: Asia/Taipei
+    ports:
+      - 6376:6376
+      - 16376:16376
+    volumes:
+      - ./shared-config/redis-cluster/redis/6376/conf:/etc/redis
+      - ./shared-config/redis-cluster/redis/6376/data:/data
+    command: ["redis-server","/etc/redis/redis.conf"]

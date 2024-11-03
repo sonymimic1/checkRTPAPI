@@ -1,0 +1,33 @@
+{
+  "app": {
+    "port": 8001,
+    "searchGameCode": ["AT01","AB3","GO01"],
+    "scheduleCleanRTP": "* 0 * * *"
+  },
+  "redis": {
+    "readTimeout": 3,
+    "writeTimeout": 30,
+    "maxRetries": 15,
+    "dialTimeout": 3,
+    "poolSize": 50,
+    "poolTimeout": 1800,
+    "idleTimeout": 1800,
+    "idleCheckFrequency": 900,
+    "hosts": [
+      "redis-1:6371",
+      "redis-2:6372",
+      "redis-3:6373",
+      "redis-4:6374",
+      "redis-5:6375",
+      "redis-6:6376"
+    ]
+  },
+  "log": {
+    "Enable": true,
+    "Level": "debug",
+    "FileSizeMega": 10,
+    "FileCount": 3,
+    "KeepDays": 1,
+    "Path": "./log/"
+  }
+}

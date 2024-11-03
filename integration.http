@@ -1,0 +1,51 @@
+@BASE_URL = http://127.0.0.1:30002
+
+# @name checkHealth
+GET {{BASE_URL}}/health HTTP/1.1
+Content-Type: application/json
+
+{
+}
+###
+
+# @name healthRedisConnection
+GET {{BASE_URL}}/health/redis HTTP/1.1
+Content-Type: application/json
+
+{
+}
+###
+
+# @name GetRTPByGameCode
+GET {{BASE_URL}}/rtp?gamecode=AB3 HTTP/1.1
+Content-Type: application/json
+
+{
+}
+###
+
+# @name GetRTPsAll
+GET {{BASE_URL}}/rtp/all HTTP/1.1
+Content-Type: application/json
+
+{
+}
+###
+
+# @name ClearBetWinAll
+PUT {{BASE_URL}}/clear/all HTTP/1.1
+Content-Type: application/json
+
+{
+}
+###
+
+# @name ClearBetWinByGameCode
+PUT {{BASE_URL}}/clear?gamecode=AT01 HTTP/1.1
+Content-Type: application/json
+
+{
+}
+###
+
+
