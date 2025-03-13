@@ -1,0 +1,29 @@
+# ----------------------------------------------
+# 安裝 glasskube
+# ----------------------------------------------
+#安裝k8s套件管理執行檔
+brew install glasskube/tap/glasskube 
+
+#Kubernetes 集群中安装 glasskube
+glasskube bootstrap
+
+＃啟動並且開啟 Glasskube 的 GUI
+glasskube serve
+
+
+
+# ----------------------------------------------
+# argoCD
+# ----------------------------------------------
+https://docfunc.com/posts/100/%E4%BD%BF%E7%94%A8-argo-cd-%E5%9C%A8-k8s-%E4%B8%8A%E5%AF%A6%E4%BD%9C%E6%8C%81%E7%BA%8C%E4%BD%88%E7%BD%B2-post
+
+#使用Glasskube  GUI 安裝argoCD 套件
+
+
+#查看一下 Argo CD 啟用了哪些資源
+kubectl get all -n argocd
+
+
+#Argo CD CLI 只用來取得初始的帳號密碼。透過該組帳號密碼登入 Argo CD
+brew install argocd
+argocd admin initial-password -n argocd

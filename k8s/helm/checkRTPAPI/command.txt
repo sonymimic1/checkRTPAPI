@@ -1,0 +1,17 @@
+# release chart
+helm upgrade --install checkapi --values values.yaml .
+
+# 查看有哪些release
+helm list
+
+# 移除
+helm uninstall checkapi
+
+#========================================
+
+#打包
+helm package checkapi
+
+#加入index
+touch index.yaml
+helm repo index .
