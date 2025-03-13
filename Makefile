@@ -5,7 +5,7 @@ TARGET = main.go
 GOPRIVATE="sonymimic1"
 OUTPUT = $(NAME)
 DOCKER_IMAGE = sonymimic/checkrtpapi
-TAG = 1.0
+TAG = 1.1
 clean-cache:
 	go clean --modcache
 

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"log"
 	v1 "sonymimic1/Golang_server/checkRTP/internal/controller/http/v1"
 	"sonymimic1/Golang_server/checkRTP/internal/repo"
 	"sonymimic1/Golang_server/checkRTP/internal/usecase"
@@ -47,6 +48,8 @@ func (app *App) setService() error {
 			if err != nil {
 				app.logger.Error(logPrefix, zap.Error(err))
 			}
+
+			//must(rtpUseCase.ClearRTPsAll())
 		})
 		if err != nil {
 			logPrefix := "app.cron.AddFunc"
@@ -56,4 +59,28 @@ func (app *App) setService() error {
 	}
 
 	return nil
+}
+
+// --------------------
+// golang write skill
+// --------------------
+// function for error handling
+func Must[T any](v T, err error) T {
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return v
+}
+
+// Variadic for optional parameters
+func GetRequest(address string, optTimeout ...int) int {
+	//Default value
+	timeout := 30
+	//If the value is set we override the default
+	if len(optTimeout) > 0 {
+		timeout = optTimeout[0]
+	}
+	//Do something with the timeout
+	return timeout
 }

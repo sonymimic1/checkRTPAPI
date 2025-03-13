@@ -1,6 +1,6 @@
 application:
   name: app-api
-  image: sonymimic/checkrtpapi:1.0
+  image: sonymimic/checkrtpapi:1.1
   replicas: 1
   port: 8001
   nodePort: 30002

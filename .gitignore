@@ -5,7 +5,6 @@ pid
 .tags*
 *.pid
 *.bak
-*.txt
 *.log
 *.mac
 *.pid

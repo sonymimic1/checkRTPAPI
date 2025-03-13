@@ -31,7 +31,7 @@ type App struct {
 }
 
 func NewApp(ctx context.Context, cfg config.Config) *App {
-	return &App{
+	app := &App{
 		redisClient: conn.SetupRedisConnection(ctx, cfg.Redis),
 		ctx:         ctx,
 		router:      gin.Default(),
@@ -47,6 +47,12 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 			Filename:   "checkRTP.log",
 		}, nil),
 	}
+	// 設定CORS中介軟體
+	app.router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Next()
+	})
+	return app
 
 }
 
